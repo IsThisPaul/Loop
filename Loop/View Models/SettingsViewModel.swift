@@ -52,6 +52,7 @@ public typealias PumpManagerViewModel = DeviceViewModel<PumpManagerDescriptor>
 public protocol SettingsViewModelDelegate: AnyObject {
     func dosingEnabledChanged(_: Bool)
     func dosingStrategyChanged(_: AutomaticDosingStrategy)
+    func applyLinearRampToBolusApplicationFactorChanged(_: Bool)
     func didTapIssueReport()
     var closedLoopDescriptiveText: String? { get }
 }
@@ -93,6 +94,12 @@ public class SettingsViewModel: ObservableObject {
         }
     }
 
+    @Published var applyLinearRampToBolusApplicationFactor: Bool {
+        didSet {
+            delegate?.applyLinearRampToBolusApplicationFactorChanged(applyLinearRampToBolusApplicationFactor)
+        }
+    }
+
     var closedLoopPreference: Bool {
        didSet {
            delegate?.dosingEnabledChanged(closedLoopPreference)
@@ -113,6 +120,7 @@ public class SettingsViewModel: ObservableObject {
                 initialDosingEnabled: Bool,
                 isClosedLoopAllowed: Published<Bool>.Publisher,
                 automaticDosingStrategy: AutomaticDosingStrategy,
+                applyLinearRampToBolusApplicationFactor: Bool,
                 availableSupports: [SupportUI],
                 isOnboardingComplete: Bool,
                 therapySettingsViewModelDelegate: TherapySettingsViewModelDelegate?,
@@ -130,6 +138,7 @@ public class SettingsViewModel: ObservableObject {
         self.closedLoopPreference = initialDosingEnabled
         self.isClosedLoopAllowed = false
         self.automaticDosingStrategy = automaticDosingStrategy
+        self.applyLinearRampToBolusApplicationFactor = applyLinearRampToBolusApplicationFactor
         self.availableSupports = availableSupports
         self.isOnboardingComplete = isOnboardingComplete
         self.therapySettingsViewModelDelegate = therapySettingsViewModelDelegate
@@ -178,6 +187,7 @@ extension SettingsViewModel {
                                  initialDosingEnabled: true,
                                  isClosedLoopAllowed: FakeClosedLoopAllowedPublisher().$mockIsClosedLoopAllowed,
                                  automaticDosingStrategy: .automaticBolus,
+                                 applyLinearRampToBolusApplicationFactor: false,
                                  availableSupports: [],
                                  isOnboardingComplete: false,
                                  therapySettingsViewModelDelegate: nil,
