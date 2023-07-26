@@ -239,9 +239,15 @@ final class StatusTableViewController: LoopChartsTableViewController {
     private var bolusState: PumpManagerStatus.BolusState = .noBolus {
         didSet {
             if oldValue != bolusState {
-                // Bolus starting
-                if case .inProgress = bolusState {
-                    bolusProgressReporter = deviceManager.pumpManager?.createBolusProgressReporter(reportingOn: DispatchQueue.main)
+                switch bolusState {
+                case .inProgress(_):
+                    guard case .inProgress = oldValue else {
+                        // Bolus starting
+                        bolusProgressReporter = deviceManager.pumpManager?.createBolusProgressReporter(reportingOn: DispatchQueue.main)
+                        break
+                    }
+                default:
+                    break
                 }
                 refreshContext.update(with: .status)
                 reloadData(animated: true)
@@ -443,7 +449,7 @@ final class StatusTableViewController: LoopChartsTableViewController {
 
             if currentContext.contains(.carbs) {
                 reloadGroup.enter()
-                self.deviceManager.carbStore.getCarbsOnBoardValues(start: startDate, end: nil, effectVelocities: FeatureFlags.dynamicCarbAbsorptionEnabled ? state.insulinCounteractionEffects : nil) { (result) in
+                self.deviceManager.carbStore.getCarbsOnBoardValues(start: startDate, end: nil, effectVelocities: state.insulinCounteractionEffects) { (result) in
                     switch result {
                     case .failure(let error):
                         self.log.error("CarbStore failed to get carbs on board values: %{public}@", String(describing: error))
@@ -784,7 +790,7 @@ final class StatusTableViewController: LoopChartsTableViewController {
             case (.enactingBolus, .enactingBolus):
                 break
             case (.bolusing(let oldDose), .bolusing(let newDose)):
-                if oldDose != newDose {
+                if oldDose.syncIdentifier != newDose.syncIdentifier {
                     tableView.reloadRows(at: [statusIndexPath], with: animated ? .fade : .none)
                 }
             case (.pumpSuspended(resuming: let wasResuming), .pumpSuspended(resuming: let isResuming)):
@@ -1430,11 +1436,22 @@ final class StatusTableViewController: LoopChartsTableViewController {
 
         return item
     }
-
-    @IBAction func togglePreMealMode(_ sender: UIBarButtonItem) {
+    
+    func presentPreMealMode(confirm: Bool = true) {
         if preMealMode == true {
-            deviceManager.loopManager.mutateSettings { settings in
-                settings.clearOverride(matching: .preMeal)
+            if confirm {
+                let alert = UIAlertController(title: "Disable Pre-Meal Preset?", message: "This will remove any currently applied pre-meal preset.", preferredStyle: .alert)
+                alert.addCancelAction()
+                alert.addAction(UIAlertAction(title: "Disable", style: .destructive, handler: { [weak self] _ in
+                    self?.deviceManager.loopManager.mutateSettings { settings in
+                        settings.clearOverride(matching: .preMeal)
+                    }
+                }))
+                present(alert, animated: true)
+            } else {
+                deviceManager.loopManager.mutateSettings { settings in
+                    settings.clearOverride(matching: .preMeal)
+                }
             }
         } else {
             let vc = UIAlertController(premealDurationSelectionHandler: { duration in
@@ -1462,10 +1479,25 @@ final class StatusTableViewController: LoopChartsTableViewController {
         }
     }
 
-    @IBAction func toggleWorkoutMode(_ sender: UIBarButtonItem) {
+    @IBAction func togglePreMealMode(_ sender: UIBarButtonItem) {
+        presentPreMealMode(confirm: false)
+    }
+    
+    func presentCustomPresets(confirm: Bool = true) {
         if workoutMode == true {
-            deviceManager.loopManager.mutateSettings { settings in
-                settings.clearOverride()
+            if confirm {
+                let alert = UIAlertController(title: "Disable Preset?", message: "This will remove any currently applied preset.", preferredStyle: .alert)
+                alert.addCancelAction()
+                alert.addAction(UIAlertAction(title: "Disable", style: .destructive, handler: { [weak self] _ in
+                    self?.deviceManager.loopManager.mutateSettings { settings in
+                        settings.clearOverride()
+                    }
+                }))
+                present(alert, animated: true)
+            } else {
+                deviceManager.loopManager.mutateSettings { settings in
+                    settings.clearOverride()
+                }
             }
         } else {
             if FeatureFlags.sensitivityOverridesEnabled {
@@ -1497,6 +1529,10 @@ final class StatusTableViewController: LoopChartsTableViewController {
         }
     }
 
+    @IBAction func toggleWorkoutMode(_ sender: UIBarButtonItem) {
+        presentCustomPresets(confirm: false)
+    }
+    
     @IBAction func onSettingsTapped(_ sender: UIBarButtonItem) {
         presentSettings()
     }

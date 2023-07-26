@@ -83,6 +83,7 @@ class LoopAppManager: NSObject {
     private var analyticsServicesManager = AnalyticsServicesManager()
     private(set) var testingScenariosManager: TestingScenariosManager?
     private var resetLoopManager: ResetLoopManager!
+    private var deeplinkManager: DeeplinkManager!
 
     private var overrideHistory = UserDefaults.appGroup?.overrideHistory ?? TemporaryScheduleOverrideHistory.init()
 
@@ -231,6 +232,7 @@ class LoopAppManager: NSObject {
                                               windowProvider: windowProvider,
                                               userDefaults: UserDefaults.appGroup!)
 
+        deeplinkManager = DeeplinkManager(rootViewController: rootViewController)
 
         for support in supportManager.availableSupports {
             if let analyticsService = support as? AnalyticsService {
@@ -349,8 +351,14 @@ class LoopAppManager: NSObject {
         guard let notification = notification else {
             return false
         }
-        deviceDataManager?.handleRemoteNotification(notification)
+        deviceDataManager?.servicesManager.handleRemoteNotification(notification)
         return true
+    }
+    
+    // MARK: - Deeplinking
+    
+    func handle(_ url: URL) -> Bool {
+        deeplinkManager.handle(url)
     }
 
     // MARK: - Continuity
@@ -622,6 +630,14 @@ extension LoopAppManager: ResetLoopManagerDelegate {
     func loopDidReset() {
         supportManager.availableSupports.forEach { supportUI in
             supportUI.loopDidReset()
+        }
+    }
+    
+    func resetTestingData(completion: @escaping () -> Void) {
+        deviceDataManager.deleteTestingCGMData { [weak deviceDataManager] _ in
+            deviceDataManager?.deleteTestingPumpData { _ in
+                completion()
+            }
         }
     }
     
