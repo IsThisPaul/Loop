@@ -26,6 +26,7 @@ public struct SettingsView: View {
 
     @State private var pumpChooserIsPresented: Bool = false
     @State private var cgmChooserIsPresented: Bool = false
+    @State private var favoriteFoodsIsPresented: Bool = false
     @State private var serviceChooserIsPresented: Bool = false
     @State private var therapySettingsIsPresented: Bool = false
     @State private var deletePumpDataAlertIsPresented = false
@@ -55,6 +56,9 @@ public struct SettingsView: View {
                         configurationSection
                     }
                     deviceSettingsSection
+                    if FeatureFlags.allowExperimentalFeatures {
+                        favoriteFoodsSection
+                    }
                     if (viewModel.pumpManagerSettingsViewModel.isTestingDevice || viewModel.cgmManagerSettingsViewModel.isTestingDevice) && viewModel.showDeleteTestData {
                         deleteDataSection
                     }
@@ -71,7 +75,7 @@ public struct SettingsView: View {
                     supportSection
 
                     if let profileExpiration = BuildDetails.default.profileExpiration, FeatureFlags.profileExpirationSettingsViewEnabled {
-                        profileExpirationSection(profileExpiration: profileExpiration)
+                        appExpirationSection(profileExpiration: profileExpiration)
                     }
                 }
             }
@@ -115,13 +119,13 @@ extension String: Identifiable {
     }
 }
 
-struct PluginMenuItem: Identifiable {
+struct PluginMenuItem<Content: View>: Identifiable {
     var id: String {
         return pluginIdentifier + String(describing: offset)
     }
 
     let section: SettingsMenuSection
-    let view: AnyView
+    let view: Content
     let pluginIdentifier: String
     let offset: Int
 }
@@ -202,7 +206,7 @@ extension SettingsView {
         Section(header: SectionHeader(label: NSLocalizedString("Configuration", comment: "The title of the Configuration section in settings"))) {
             LargeButton(action: { self.therapySettingsIsPresented = true },
                             includeArrow: true,
-                            imageView: AnyView(Image("Therapy Icon")),
+                            imageView: Image("Therapy Icon"),
                             label: NSLocalizedString("Therapy Settings", comment: "Title text for button to Therapy Settings"),
                             descriptiveText: NSLocalizedString("Diabetes Treatment", comment: "Descriptive text for Therapy Settings"))
                 .sheet(isPresented: $therapySettingsIsPresented) {
@@ -231,7 +235,7 @@ extension SettingsView {
         }
     }
 
-    private var pluginMenuItems: [PluginMenuItem] {
+    private var pluginMenuItems: [PluginMenuItem<some View>] {
         self.viewModel.availableSupports.flatMap { plugin in
             plugin.configurationMenuItems().enumerated().map { index, item in
                 PluginMenuItem(section: item.section, view: item.view, pluginIdentifier: plugin.identifier, offset: index)
@@ -257,7 +261,7 @@ extension SettingsView {
         } else if viewModel.isOnboardingComplete {
             LargeButton(action: { self.pumpChooserIsPresented = true },
                         includeArrow: false,
-                        imageView: AnyView(plusImage),
+                        imageView: plusImage,
                         label: NSLocalizedString("Add Pump", comment: "Title text for button to add pump device"),
                         descriptiveText: NSLocalizedString("Tap here to set up a pump", comment: "Descriptive text for button to add pump device"))
                 .actionSheet(isPresented: $pumpChooserIsPresented) {
@@ -289,12 +293,25 @@ extension SettingsView {
         } else {
             LargeButton(action: { self.cgmChooserIsPresented = true },
                         includeArrow: false,
-                        imageView: AnyView(plusImage),
+                        imageView: plusImage,
                         label: NSLocalizedString("Add CGM", comment: "Title text for button to add CGM device"),
                         descriptiveText: NSLocalizedString("Tap here to set up a CGM", comment: "Descriptive text for button to add CGM device"))
                 .actionSheet(isPresented: $cgmChooserIsPresented) {
                     ActionSheet(title: Text("Add CGM", comment: "The title of the CGM chooser in settings"), buttons: cgmChoices)
             }
+        }
+    }
+    
+    private var favoriteFoodsSection: some View {
+        Section {
+            LargeButton(action: { self.favoriteFoodsIsPresented = true },
+                        includeArrow: true,
+                        imageView: Image("Favorite Foods Icon").renderingMode(.template).foregroundColor(carbTintColor),
+                        label: "Favorite Foods",
+                        descriptiveText: "Simplify Carb Entry")
+        }
+        .sheet(isPresented: $favoriteFoodsIsPresented) {
+            FavoriteFoodsView()
         }
     }
     
@@ -322,7 +339,7 @@ extension SettingsView {
             if viewModel.servicesViewModel.inactiveServices().count > 0 {
                 LargeButton(action: { self.serviceChooserIsPresented = true },
                             includeArrow: false,
-                            imageView: AnyView(plusImage),
+                            imageView: plusImage,
                             label: NSLocalizedString("Add Service", comment: "The title of the add service button in settings"),
                             descriptiveText: NSLocalizedString("Tap here to set up a Service", comment: "The descriptive text of the add service button in settings"))
                     .actionSheet(isPresented: $serviceChooserIsPresented) {
@@ -399,24 +416,50 @@ extension SettingsView {
     /*
      DIY loop specific component to show users the amount of time remaining on their build before a rebuild is necessary.
      */
-    private func profileExpirationSection(profileExpiration:Date) -> some View {
-        let nearExpiration : Bool = ProfileExpirationAlerter.isNearProfileExpiration(profileExpiration: profileExpiration)
-        let profileExpirationMsg = ProfileExpirationAlerter.createProfileExpirationSettingsMessage(profileExpiration: profileExpiration)
-        let readableExpirationTime = Self.dateFormatter.string(from: profileExpiration)
+    private func appExpirationSection(profileExpiration: Date) -> some View {
+        let expirationDate = AppExpirationAlerter.calculateExpirationDate(profileExpiration: profileExpiration)
+        let isTestFlight = AppExpirationAlerter.isTestFlightBuild()
+        let nearExpiration = AppExpirationAlerter.isNearExpiration(expirationDate: expirationDate)
+        let profileExpirationMsg = AppExpirationAlerter.createProfileExpirationSettingsMessage(expirationDate: expirationDate)
+        let readableExpirationTime = Self.dateFormatter.string(from: expirationDate)
         
-        return Section(header: SectionHeader(label: NSLocalizedString("App Profile", comment: "Settings app profile section")),
-                       footer: Text(NSLocalizedString("Profile expires ", comment: "Time that profile expires") + readableExpirationTime)) {
-            if(nearExpiration) {
-                Text(profileExpirationMsg).foregroundColor(.red)
+        if isTestFlight {
+            return createAppExpirationSection(
+                headerLabel: NSLocalizedString("TestFlight", comment: "Settings app TestFlight section"),
+                footerLabel: NSLocalizedString("TestFlight expires ", comment: "Time that build expires") + readableExpirationTime,
+                expirationLabel: NSLocalizedString("TestFlight Expiration", comment: "Settings TestFlight expiration view"),
+                updateURL: "https://loopkit.github.io/loopdocs/gh-actions/gh-update/",
+                nearExpiration: nearExpiration,
+                expirationMessage: profileExpirationMsg
+            )
+        } else {
+            return createAppExpirationSection(
+                headerLabel: NSLocalizedString("App Profile", comment: "Settings app profile section"),
+                footerLabel: NSLocalizedString("Profile expires ", comment: "Time that profile expires") + readableExpirationTime,
+                expirationLabel: NSLocalizedString("Profile Expiration", comment: "Settings App Profile expiration view"),
+                updateURL: "https://loopkit.github.io/loopdocs/build/updating/",
+                nearExpiration: nearExpiration,
+                expirationMessage: profileExpirationMsg
+            )
+        }
+    }
+    
+    private func createAppExpirationSection(headerLabel: String, footerLabel: String, expirationLabel: String, updateURL: String, nearExpiration: Bool, expirationMessage: String) -> some View {
+        return Section(
+            header: SectionHeader(label: headerLabel),
+            footer: Text(footerLabel)
+        ) {
+            if nearExpiration {
+                Text(expirationMessage).foregroundColor(.red)
             } else {
                 HStack {
-                    Text("Profile Expiration", comment: "Settings App Profile expiration view")
+                    Text(expirationLabel)
                     Spacer()
-                    Text(profileExpirationMsg).foregroundColor(Color.secondary)
+                    Text(expirationMessage).foregroundColor(Color.secondary)
                 }
             }
             Button(action: {
-                UIApplication.shared.open(URL(string: "https://loopkit.github.io/loopdocs/build/updating/")!)
+                UIApplication.shared.open(URL(string: updateURL)!)
             }) {
                 Text(NSLocalizedString("How to update (LoopDocs)", comment: "The title text for how to update"))
             }
@@ -438,41 +481,43 @@ extension SettingsView {
             .padding(EdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 10))
     }
     
-    private func deviceImage(uiImage: UIImage?) -> AnyView {
+    @ViewBuilder
+    private func deviceImage(uiImage: UIImage?) -> some View {
         if let uiImage = uiImage {
-            return AnyView(Image(uiImage: uiImage)
+            Image(uiImage: uiImage)
                 .renderingMode(.original)
                 .resizable()
-                .scaledToFit())
+                .scaledToFit()
         } else {
-            return AnyView(Spacer())
+            Spacer()
         }
     }
     
-    private func serviceImage(uiImage: UIImage?) -> AnyView {
-        return deviceImage(uiImage: uiImage)
+    @ViewBuilder
+    private func serviceImage(uiImage: UIImage?) -> some View {
+        deviceImage(uiImage: uiImage)
     }
 }
 
-fileprivate struct LargeButton: View {
+fileprivate struct LargeButton<Content: View>: View {
     
     let action: () -> Void
     var includeArrow: Bool = true
-    let imageView: AnyView
+    let imageView: Content
     let label: String
     let descriptiveText: String
 
     // TODO: The design doesn't show this, but do we need to consider different values here for different size classes?
-    static let spacing: CGFloat = 15
-    static let imageWidth: CGFloat = 60
-    static let imageHeight: CGFloat = 60
-    static let topBottomPadding: CGFloat = 10
+    private let spacing: CGFloat = 15
+    private let imageWidth: CGFloat = 60
+    private let imageHeight: CGFloat = 60
+    private let topBottomPadding: CGFloat = 10
     
     public var body: some View {
         Button(action: action) {
             HStack {
-                HStack(spacing: Self.spacing) {
-                    imageView.frame(width: Self.imageWidth, height: Self.imageHeight)
+                HStack(spacing: spacing) {
+                    imageView.frame(width: imageWidth, height: imageHeight)
                     VStack(alignment: .leading) {
                         Text(label)
                             .foregroundColor(.primary)
@@ -485,7 +530,7 @@ fileprivate struct LargeButton: View {
                     Image(systemName: "chevron.right").foregroundColor(.gray).font(.footnote)
                 }
             }
-            .padding(EdgeInsets(top: Self.topBottomPadding, leading: 0, bottom: Self.topBottomPadding, trailing: 0))
+            .padding(EdgeInsets(top: topBottomPadding, leading: 0, bottom: topBottomPadding, trailing: 0))
         }
     }
 }
