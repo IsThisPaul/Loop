@@ -17,8 +17,8 @@ struct GlucoseBasedApplicationFactorStrategy: ApplicationFactorStrategy {
     // set minGlucoseSlidingScale based on user setting for correction range
     // use mg/dL for calculations
     static let minGlucoseDeltaSlidingScale = 10.0 // mg/dL
-    static let maxGlucoseSlidingScale = 250.0 // mg/dL
-
+    static let maxGlucoseSlidingScale = 300.0 // mg/dL
+    
     func calculateDosingFactor(
         for glucose: HKQuantity,
         correctionRangeSchedule: GlucoseRangeSchedule,
