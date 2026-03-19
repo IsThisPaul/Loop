@@ -118,6 +118,7 @@ public class CGMStatusHUDViewModel {
     func setGlucoseQuantity(_ glucoseQuantity: Double,
                             at glucoseStartDate: Date,
                             unit: HKUnit,
+                            deltaString: String? = nil,
                             staleGlucoseAge: TimeInterval,
                             glucoseDisplay: GlucoseDisplayable?,
                             wasUserEntered: Bool,
@@ -172,7 +173,11 @@ public class CGMStatusHUDViewModel {
             accessibilityStrings.append(localizedMessage + ", " + statusStateMessage)
         }
                 
-        unitsString = unit.localizedShortUnitString
+        if let deltaString {
+            unitsString = "\(deltaString) \(unit.localizedShortUnitString)"
+        } else {
+            unitsString = unit.localizedShortUnitString
+        }
         accessibilityString = accessibilityStrings.joined(separator: ", ")
     }
 

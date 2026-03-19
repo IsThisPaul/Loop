@@ -44,6 +44,7 @@ final class StatusTableViewController: LoopChartsTableViewController {
     var supportManager: SupportManager!
 
     lazy private var cancellables = Set<AnyCancellable>()
+    private var latestGlucoseSamples: [StoredGlucoseSample] = []
 
     override func viewDidLoad() {
 
@@ -488,6 +489,7 @@ final class StatusTableViewController: LoopChartsTableViewController {
                     glucoseSamples = nil
                 case .success(let samples):
                     glucoseSamples = samples
+                    self.latestGlucoseSamples = samples
                 }
                 reloadGroup.leave()
             }
@@ -618,9 +620,12 @@ final class StatusTableViewController: LoopChartsTableViewController {
                 // CGM Status
                 if let glucose = self.deviceManager.glucoseStore.latestGlucose {
                     let unit = self.statusCharts.glucose.glucoseUnit
+                    let glucoseDeltaSamples = glucoseSamples ?? self.latestGlucoseSamples
+                    let glucoseDeltaString = Self.glucoseDeltaString(from: glucoseDeltaSamples, unit: unit)
                     hudView.cgmStatusHUD.setGlucoseQuantity(glucose.quantity.doubleValue(for: unit),
                                                             at: glucose.startDate,
                                                             unit: unit,
+                                                            deltaString: glucoseDeltaString,
                                                             staleGlucoseAge: LoopCoreConstants.inputDataRecencyInterval,
                                                             glucoseDisplay: self.deviceManager.glucoseDisplay(for: glucose),
                                                             wasUserEntered: glucose.wasUserEntered,
@@ -662,6 +667,28 @@ final class StatusTableViewController: LoopChartsTableViewController {
         case hud
         case status
         case charts
+    }
+
+    private static func glucoseDeltaString(from glucoseSamples: [StoredGlucoseSample]?, unit: HKUnit) -> String? {
+        guard let glucoseSamples,
+              glucoseSamples.count >= 2
+        else {
+            return nil
+        }
+
+        let current = glucoseSamples[glucoseSamples.count - 1]
+        let previous = glucoseSamples[glucoseSamples.count - 2]
+        guard current.startDate.timeIntervalSince(previous.startDate) <= .minutes(6) else {
+            return nil
+        }
+
+        let deltaValue = current.quantity.doubleValue(for: unit) - previous.quantity.doubleValue(for: unit)
+        let numberFormatter = NumberFormatter.glucoseFormatter(for: unit)
+        guard let deltaMagnitude = numberFormatter.string(from: abs(deltaValue)) else {
+            return nil
+        }
+
+        return "\(deltaValue < 0 ? "-" : "+")\(deltaMagnitude)"
     }
 
     // MARK: - Chart Section Data

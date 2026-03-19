@@ -14,7 +14,7 @@ import LoopCore
 struct GlucoseView: View {
 
     var entry: StatusWidgetTimelimeEntry
-    
+
     var body: some View {
         VStack(alignment: .center, spacing: 0) {
             HStack(spacing: 2) {
@@ -53,16 +53,17 @@ struct GlucoseView: View {
                 let deltaString = (deltaValue < 0 ? "-" : "+") + numberFormatter.string(from: abs(deltaValue))!
                 
                 Text(deltaString + " " + unitString)
-                // Dynamic text causes string to be cut off
                     .font(.system(size: 13))
                     .foregroundColor(entry.glucoseStatusIsStale ? Color(UIColor.systemGray3) : Color(UIColor.secondaryLabel))
-                    .fixedSize(horizontal: true, vertical: true)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
             }
             else {
                 Text(unitString)
                     .font(.footnote)
                     .foregroundColor(entry.glucoseStatusIsStale ? Color(UIColor.systemGray3) : Color(UIColor.secondaryLabel))
             }
+
         }
     }
     

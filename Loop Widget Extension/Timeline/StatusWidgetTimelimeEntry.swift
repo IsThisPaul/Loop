@@ -28,6 +28,8 @@ struct StatusWidgetTimelimeEntry: TimelineEntry {
     let pumpHighlight: DeviceStatusHighlightContext?
     let netBasal: NetBasalContext?
     
+    let insulinOnBoard: Double?
+    let carbsOnBoard: Double?
     let eventualGlucose: GlucoseContext?
     
     let preMealPresetAllowed: Bool

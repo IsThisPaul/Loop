@@ -129,7 +129,7 @@ struct ChartView: View {
             }
             .chartXAxis {
                 AxisMarks(position: .automatic, values: .stride(by: .hour)) { _ in
-                    AxisValueLabel(format: .dateTime.hour(.twoDigits(amPM: .narrow)), anchor: .top)
+                    AxisValueLabel(format: .dateTime.hour(.defaultDigits(amPM: .abbreviated)), anchor: .top)
                         .foregroundStyle(Color.primary)
                     AxisGridLine(stroke: .init(lineWidth: 0.1, dash: [2, 3]))
                         .foregroundStyle(Color.primary)

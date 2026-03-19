@@ -37,7 +37,7 @@ class StatusWidgetTimelineProvider: TimelineProvider {
     func placeholder(in context: Context) -> StatusWidgetTimelimeEntry {
         log.default("%{public}@: context=%{public}@", #function, String(describing: context))
 
-        return StatusWidgetTimelimeEntry(date: Date(), contextUpdatedAt: Date(), lastLoopCompleted: nil, closeLoop: true, currentGlucose: nil, glucoseFetchedAt: Date(), delta: nil, unit: .milligramsPerDeciliter, sensor: nil, pumpHighlight: nil, netBasal: nil, eventualGlucose: nil, preMealPresetAllowed: true, preMealPresetActive: false, customPresetActive: false)
+        return StatusWidgetTimelimeEntry(date: Date(), contextUpdatedAt: Date(), lastLoopCompleted: nil, closeLoop: true, currentGlucose: nil, glucoseFetchedAt: Date(), delta: nil, unit: .milligramsPerDeciliter, sensor: nil, pumpHighlight: nil, netBasal: nil, insulinOnBoard: nil, carbsOnBoard: nil, eventualGlucose: nil, preMealPresetAllowed: true, preMealPresetActive: false, customPresetActive: false)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (StatusWidgetTimelimeEntry) -> ()) {
@@ -129,6 +129,8 @@ class StatusWidgetTimelineProvider: TimelineProvider {
             let customPresetActive = context.customPresetActive ?? false
 
             let netBasal = context.netBasal
+            let insulinOnBoard = context.insulinOnBoard
+            let carbsOnBoard = context.carbsOnBoard
 
             let currentGlucose = finalGlucose.last
             var previousGlucose: GlucoseValue?
@@ -166,6 +168,8 @@ class StatusWidgetTimelineProvider: TimelineProvider {
                 sensor: context.glucoseDisplay,
                 pumpHighlight: context.pumpStatusHighlightContext,
                 netBasal: netBasal,
+                insulinOnBoard: insulinOnBoard,
+                carbsOnBoard: carbsOnBoard,
                 eventualGlucose: eventualGlucose,
                 preMealPresetAllowed: preMealPresetAllowed,
                 preMealPresetActive: preMealPresetActive,

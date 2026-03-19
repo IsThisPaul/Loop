@@ -287,10 +287,12 @@ class StatusViewController: UIViewController, NCWidgetProviding {
             }
 
             if let lastGlucose = glucose.last {
+                let glucoseDeltaString = Self.glucoseDeltaString(from: glucose, unit: unit)
                 self.hudView.cgmStatusHUD.setGlucoseQuantity(
                     lastGlucose.quantity.doubleValue(for: unit),
                     at: lastGlucose.startDate,
                     unit: unit,
+                    deltaString: glucoseDeltaString,
                     staleGlucoseAge: LoopCoreConstants.inputDataRecencyInterval,
                     glucoseDisplay: context.glucoseDisplay,
                     wasUserEntered: lastGlucose.wasUserEntered,
@@ -326,5 +328,27 @@ class StatusViewController: UIViewController, NCWidgetProviding {
         // Right now we always act as if there's new data.
         // TODO: keep track of data changes and return .noData if necessary
         return NCUpdateResult.newData
+    }
+}
+
+private extension StatusViewController {
+    static func glucoseDeltaString(from glucoseSamples: [StoredGlucoseSample], unit: HKUnit) -> String? {
+        guard glucoseSamples.count >= 2 else {
+            return nil
+        }
+
+        let current = glucoseSamples[glucoseSamples.count - 1]
+        let previous = glucoseSamples[glucoseSamples.count - 2]
+        guard current.startDate.timeIntervalSince(previous.startDate) <= .minutes(6) else {
+            return nil
+        }
+
+        let deltaValue = current.quantity.doubleValue(for: unit) - previous.quantity.doubleValue(for: unit)
+        let numberFormatter = NumberFormatter.glucoseFormatter(for: unit)
+        guard let deltaMagnitude = numberFormatter.string(from: abs(deltaValue)) else {
+            return nil
+        }
+
+        return "\(deltaValue < 0 ? "-" : "+")\(deltaMagnitude)"
     }
 }

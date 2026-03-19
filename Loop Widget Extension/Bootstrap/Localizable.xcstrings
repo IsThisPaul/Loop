@@ -224,6 +224,7 @@
       }
     },
     "%@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "da" : {
           "stringUnit" : {
@@ -604,6 +605,9 @@
         }
       }
     },
+    "COB" : {
+      "comment" : "Label for carbohydrates on board in widget"
+    },
     "Color" : {
       "localizations" : {
         "de" : {
@@ -790,6 +794,7 @@
       }
     },
     "Eventual" : {
+      "extractionState" : "stale",
       "localizations" : {
         "da" : {
           "stringUnit" : {
@@ -1045,6 +1050,12 @@
           }
         }
       }
+    },
+    "grams" : {
+      "comment" : "Full unit name for grams in compact live activity metrics\nFull unit name for grams in widget metrics"
+    },
+    "IOB" : {
+      "comment" : "Label for insulin on board in widget"
     },
     "Loop Status Widget" : {
       "localizations" : {
@@ -1753,7 +1764,10 @@
           }
         }
       }
+    },
+    "Units" : {
+      "comment" : "Full unit name for insulin units in compact live activity metrics\nFull unit name for insulin units in widget metrics"
     }
   },
-  "version" : "1.0"
+  "version" : "1.1"
 }

@@ -24,6 +24,8 @@ public struct GlucoseActivityAttributes: ActivityAttributes {
         public let eventualGlucose: Double?
         public let trendType: GlucoseTrend?
         public let delta: String
+        public let iob: String
+        public let cob: String
         public let isMmol: Bool
         
         // Loop circle

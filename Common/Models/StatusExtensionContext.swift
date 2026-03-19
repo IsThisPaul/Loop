@@ -291,7 +291,7 @@ struct PumpManagerHUDViewContext: RawRepresentable {
 
 struct StatusExtensionContext: RawRepresentable {
     typealias RawValue = [String: Any]
-    private let version = 5
+    private let version = 6
 
     var predictedGlucose: PredictedGlucoseContext?
     var lastLoopCompleted: Date?
@@ -309,6 +309,7 @@ struct StatusExtensionContext: RawRepresentable {
     var pumpLifecycleProgressContext: DeviceLifecycleProgressContext?
     var cgmStatusHighlightContext: DeviceStatusHighlightContext?
     var cgmLifecycleProgressContext: DeviceLifecycleProgressContext?
+    var insulinOnBoard: Double?
     var carbsOnBoard: Double?
     
     init() { }
@@ -334,6 +335,7 @@ struct StatusExtensionContext: RawRepresentable {
         customPresetActive = rawValue["customPresetActive"] as? Bool
         batteryPercentage = rawValue["batteryPercentage"] as? Double
         reservoirCapacity = rawValue["reservoirCapacity"] as? Double
+        insulinOnBoard = rawValue["insulinOnBoard"] as? Double
         carbsOnBoard = rawValue["carbsOnBoard"] as? Double
 
         if let rawValue = rawValue["glucoseDisplay"] as? GlucoseDisplayableContext.RawValue {
@@ -382,6 +384,7 @@ struct StatusExtensionContext: RawRepresentable {
         raw["pumpLifecycleProgressContext"] = pumpLifecycleProgressContext?.rawValue
         raw["cgmStatusHighlightContext"] = cgmStatusHighlightContext?.rawValue
         raw["cgmLifecycleProgressContext"] = cgmLifecycleProgressContext?.rawValue
+        raw["insulinOnBoard"] = insulinOnBoard
         raw["carbsOnBoard"] = carbsOnBoard
         
         return raw

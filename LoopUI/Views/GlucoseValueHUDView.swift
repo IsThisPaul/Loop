@@ -21,6 +21,9 @@ public final class GlucoseValueHUDView: BaseHUDView {
         didSet {
             unitLabel.text = "–"
             unitLabel.textColor = .secondaryLabel
+            unitLabel.adjustsFontSizeToFitWidth = true
+            unitLabel.minimumScaleFactor = 0.6
+            unitLabel.lineBreakMode = .byClipping
         }
     }
 

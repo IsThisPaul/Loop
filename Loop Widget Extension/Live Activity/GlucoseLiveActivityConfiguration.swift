@@ -9,6 +9,7 @@
 import ActivityKit
 import Charts
 import HealthKit
+import UIKit
 import LoopCore
 import LoopKit
 import SwiftUI
@@ -211,49 +212,220 @@ struct GlucoseLiveActivityConfiguration: Widget {
         let unit = context.state.isMmol
             ? HKUnit.millimolesPerLiter.localizedShortUnitString
             : HKUnit.milligramsPerDeciliter.localizedShortUnitString
-        
+
         let glucoseColor = !context.attributes.useLimits ? .primary : getGlucoseColor(context: context)
         let currentBG = (glucoseFormatter.string(from: context.state.currentGlucose) ?? "??") + getArrowImage(context.state.trendType)
-        let eventualBG = formatEventualBG(value: context.state.eventualGlucose, formatter: glucoseFormatter)
-        
-        HStack(spacing: 10) {
-            loopIcon(context, size: 24)
-            
-            HStack(alignment: .top) {
-                VStack(alignment: .leading) {
-                    Text(currentBG)
-                        .font(.headline)
-                        .foregroundStyle(glucoseColor)
-                    Text(context.state.delta + " " + unit)
-                        .font(.caption2)
-                        .foregroundStyle(Color(white: 0.7))
-                }
-                
-                Spacer()
-                
-                VStack(alignment: .trailing) {
-                    Text(eventualBG)
-                        .font(.headline)
-                        .foregroundStyle(.primary)
-                    
-                    Text(unit)
-                        .font(.caption2)
-                        .foregroundStyle(Color(white: 0.7))
-                }
+        GeometryReader { geometry in
+            let iobUnitLabel = NSLocalizedString("Units", comment: "Full unit name for insulin units in compact live activity metrics")
+            let iobCaption = "IOB"
+            let cobValue = context.state.cob
+            let cobUnitLabel = NSLocalizedString("grams", comment: "Full unit name for grams in compact live activity metrics")
+            let cobCaption = "COB"
+
+            ViewThatFits(in: .horizontal) {
+                compactBubbleRow(
+                    context: context,
+                    currentBG: currentBG,
+                    delta: context.state.delta + " " + unit,
+                    glucoseColor: glucoseColor,
+                    iob: context.state.iob,
+                    iobUnitLabel: iobUnitLabel,
+                    iobCaption: iobCaption,
+                    cob: cobValue,
+                    cobUnitLabel: cobUnitLabel,
+                    cobCaption: cobCaption,
+                    valueFont: .headline,
+                    valueUIFont: UIFont.systemFont(ofSize: UIFont.preferredFont(forTextStyle: .headline).pointSize, weight: .semibold),
+                    unitFont: .system(size: 6),
+                    unitUIFont: UIFont.systemFont(ofSize: 6),
+                    captionFont: .caption2,
+                    captionUIFont: UIFont.preferredFont(forTextStyle: .caption2),
+                    containerSize: geometry.size,
+                    glucoseMinimumScaleFactor: 1.0
+                )
+                compactBubbleRow(
+                    context: context,
+                    currentBG: currentBG,
+                    delta: context.state.delta + " " + unit,
+                    glucoseColor: glucoseColor,
+                    iob: context.state.iob,
+                    iobUnitLabel: iobUnitLabel,
+                    iobCaption: iobCaption,
+                    cob: cobValue,
+                    cobUnitLabel: cobUnitLabel,
+                    cobCaption: cobCaption,
+                    valueFont: .subheadline,
+                    valueUIFont: UIFont.systemFont(ofSize: UIFont.preferredFont(forTextStyle: .subheadline).pointSize, weight: .semibold),
+                    unitFont: .system(size: 6),
+                    unitUIFont: UIFont.systemFont(ofSize: 6),
+                    captionFont: .caption2,
+                    captionUIFont: UIFont.preferredFont(forTextStyle: .caption2),
+                    containerSize: geometry.size,
+                    glucoseMinimumScaleFactor: 1.0
+                )
+                compactBubbleRow(
+                    context: context,
+                    currentBG: currentBG,
+                    delta: context.state.delta + " " + unit,
+                    glucoseColor: glucoseColor,
+                    iob: context.state.iob,
+                    iobUnitLabel: iobUnitLabel,
+                    iobCaption: iobCaption,
+                    cob: cobValue,
+                    cobUnitLabel: cobUnitLabel,
+                    cobCaption: cobCaption,
+                    valueFont: .footnote,
+                    valueUIFont: UIFont.systemFont(ofSize: UIFont.preferredFont(forTextStyle: .footnote).pointSize, weight: .semibold),
+                    unitFont: .system(size: 6),
+                    unitUIFont: UIFont.systemFont(ofSize: 6),
+                    captionFont: .caption2,
+                    captionUIFont: UIFont.preferredFont(forTextStyle: .caption2),
+                    containerSize: geometry.size,
+                    glucoseMinimumScaleFactor: 1.0
+                )
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)  // Allow HStack to use full available width
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .privacySensitive()
-        .padding(.all, 14)
+        .padding(.all, 8)
         .background(Color.clear)
     }
-    
-    private func formatEventualBG(value: Double?, formatter: NumberFormatter) -> String {
-        guard let value = value else {
-            return "??"
+
+    @ViewBuilder
+    private func compactBubbleRow(
+        context: ActivityViewContext<GlucoseActivityAttributes>,
+        currentBG: String,
+        delta: String,
+        glucoseColor: Color,
+        iob: String,
+        iobUnitLabel: String,
+        iobCaption: String,
+        cob: String,
+        cobUnitLabel: String,
+        cobCaption: String,
+        valueFont: Font,
+        valueUIFont: UIFont,
+        unitFont: Font,
+        unitUIFont: UIFont,
+        captionFont: Font,
+        captionUIFont: UIFont,
+        containerSize: CGSize,
+        glucoseMinimumScaleFactor: CGFloat
+    ) -> some View {
+        HStack(spacing: 2) {
+            compactGlucoseBubble(
+                currentBG: currentBG,
+                delta: delta,
+                glucoseColor: glucoseColor,
+                context: context,
+                glucoseMinimumScaleFactor: glucoseMinimumScaleFactor
+            )
+            .frame(height: containerSize.height)
+            .fixedSize(horizontal: true, vertical: false)
+            .layoutPriority(1)
+
+            synchronizedCompactMetricsRow(
+                iob: iob,
+                iobUnitLabel: iobUnitLabel,
+                iobCaption: iobCaption,
+                cob: cob,
+                cobUnitLabel: cobUnitLabel,
+                cobCaption: cobCaption,
+                valueFont: valueFont,
+                unitFont: unitFont,
+                captionFont: captionFont,
+                spacing: 2
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        
-        return formatter.string(from: NSNumber(value: value)) ?? "??"
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    @ViewBuilder
+    private func synchronizedCompactMetricsRow(
+        iob: String,
+        iobUnitLabel: String,
+        iobCaption: String,
+        cob: String,
+        cobUnitLabel: String,
+        cobCaption: String,
+        valueFont: Font,
+        unitFont: Font,
+        captionFont: Font,
+        spacing: CGFloat
+    ) -> some View {
+        HStack(spacing: spacing) {
+            compactValueItem(value: iob, unitLabel: iobUnitLabel, caption: iobCaption, valueFont: valueFont, unitFont: unitFont, captionFont: captionFont)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            compactValueItem(value: cob, unitLabel: cobUnitLabel, caption: cobCaption, valueFont: valueFont, unitFont: unitFont, captionFont: captionFont)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    @ViewBuilder
+    private func compactValueItem(
+        value: String,
+        unitLabel: String,
+        caption: String,
+        valueFont: Font,
+        unitFont: Font,
+        captionFont: Font
+    ) -> some View {
+        VStack(alignment: .center) {
+            Text(value)
+                .font(valueFont)
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+
+            Text(unitLabel)
+                .font(unitFont)
+                .foregroundStyle(Color(white: 0.7))
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+
+            Text(caption)
+                .font(captionFont)
+                .foregroundStyle(Color(white: 0.7))
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+        }
+        .padding(.horizontal, 8)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        .background(Color.black.opacity(0.9))
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+    }
+
+    @ViewBuilder
+    private func compactGlucoseBubble(
+        currentBG: String,
+        delta: String,
+        glucoseColor: Color,
+        context: ActivityViewContext<GlucoseActivityAttributes>,
+        glucoseMinimumScaleFactor: CGFloat
+    ) -> some View {
+        VStack(alignment: .center, spacing: 2) {
+            HStack(spacing: 6) {
+                loopIcon(context, size: 11)
+                    .frame(width: 11, height: 11)
+                Text(currentBG)
+                    .font(.headline)
+                    .foregroundStyle(glucoseColor)
+                    .lineLimit(1)
+                    .minimumScaleFactor(glucoseMinimumScaleFactor)
+            }
+
+            Text(delta)
+                .font(.caption2)
+                .foregroundStyle(Color(white: 0.7))
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+        }
+        .padding(.horizontal, 6)
+        .frame(maxHeight: .infinity, alignment: .center)
+        .background(Color.black.opacity(0.9))
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 
     // MARK: - Dynamic Island View

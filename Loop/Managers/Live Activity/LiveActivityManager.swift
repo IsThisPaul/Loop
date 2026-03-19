@@ -118,11 +118,16 @@ class LiveActivityManager : LiveActivityManagerProxy {
                 delta = "\(deltaValue < 0 ? "-" : "+")\(glucoseFormatter.string(from: abs(deltaValue)) ?? "??")"
             }
             
+            let iob = getInsulinOnBoard()
+            let cob = getCarbsOnBoard(statusContext)
+
             let bottomRow = self.getBottomRow(
                 currentGlucose: current,
                 delta: delta,
                 statusContext: statusContext,
-                glucoseFormatter: glucoseFormatter
+                glucoseFormatter: glucoseFormatter,
+                iob: iob,
+                cob: cob
             )
 
             var predicatedGlucose: [Double] = []
@@ -178,6 +183,8 @@ class LiveActivityManager : LiveActivityManagerProxy {
                 eventualGlucose: statusContext?.predictedGlucose?.values.last,
                 trendType: statusContext?.glucoseDisplay?.trendType,
                 delta: delta,
+                iob: iob,
+                cob: cob,
                 isMmol: isMmol,
                 isCloseLoop: statusContext?.isClosedLoop ?? false,
                 lastCompleted: statusContext?.lastLoopCompleted,
@@ -310,7 +317,7 @@ class LiveActivityManager : LiveActivityManagerProxy {
             case .failure:
                 break
             case .success(let iobValue):
-                iob = self.iobFormatter.string(from: iobValue.value) ?? "??"
+                iob = self.formattedIOB(iobValue.value)
                 break
             }
             
@@ -419,17 +426,13 @@ class LiveActivityManager : LiveActivityManagerProxy {
         return glucoseRanges
     }
     
-    private func getBottomRow(currentGlucose: Double, delta: String, statusContext: StatusExtensionContext?, glucoseFormatter: NumberFormatter) -> [BottomRowItem] {
+    private func getBottomRow(currentGlucose: Double, delta: String, statusContext: StatusExtensionContext?, glucoseFormatter: NumberFormatter, iob: String, cob: String) -> [BottomRowItem] {
         return self.settings.bottomRowConfiguration.map { type in
             switch(type) {
             case .iob:
-                return BottomRowItem.generic(label: type.name(), value: getInsulinOnBoard(), unit: "U")
+                return BottomRowItem.generic(label: type.name(), value: iob, unit: "U")
                 
             case .cob:
-                var cob: String = "0"
-                if let cobValue = statusContext?.carbsOnBoard {
-                    cob = self.cobFormatter.string(from: cobValue) ?? "??"
-                }
                 return BottomRowItem.generic(label: type.name(), value: cob, unit: "g")
                 
             case .basal:
@@ -469,6 +472,8 @@ class LiveActivityManager : LiveActivityManagerProxy {
                 eventualGlucose: nil,
                 trendType: nil,
                 delta: "",
+                iob: "??",
+                cob: "??",
                 isMmol: true,
                 isCloseLoop: false,
                 lastCompleted: nil,
@@ -496,6 +501,28 @@ class LiveActivityManager : LiveActivityManagerProxy {
         } catch {
             print("ERROR: Error while creating empty live activity: \(error.localizedDescription)")
         }
+    }
+    private func getCarbsOnBoard(_ statusContext: StatusExtensionContext?) -> String {
+        guard let cobValue = statusContext?.carbsOnBoard else {
+            return "0"
+        }
+        return self.formattedCOB(cobValue)
+    }
+
+    private func formattedIOB(_ value: Double) -> String {
+        let roundedValue = (value * 10).rounded() / 10
+        if roundedValue == 0 {
+            return "0"
+        }
+        return self.iobFormatter.string(from: roundedValue) ?? "??"
+    }
+
+    private func formattedCOB(_ value: Double) -> String {
+        let roundedValue = value.rounded()
+        if roundedValue == 0 {
+            return "0"
+        }
+        return self.cobFormatter.string(from: value) ?? "??"
     }
 }
 
