@@ -14,7 +14,6 @@ enum FetchDataWarningDetail {
     case glucoseMomentumEffect(error: Error)
     case insulinEffect(error: Error)
     case insulinEffectIncludingPendingInsulin(error: Error)
-    case negativeInsulinDamper(error: Error)
     case insulinCounteractionEffect(error: Error)
     case carbEffect(error: Error)
     case carbsOnBoard(error: Error)
@@ -33,8 +32,6 @@ extension FetchDataWarningDetail {
             return "insulinEffect"
         case .insulinEffectIncludingPendingInsulin:
             return "insulinEffectIncludingPendingInsulin"
-        case .negativeInsulinDamper:
-            return "negativeInsulinDamper"
         case .insulinCounteractionEffect:
             return "insulinCounteractionEffect"
         case .carbEffect:
@@ -56,7 +53,6 @@ extension FetchDataWarningDetail {
              .insulinEffect(let error),
              .insulinEffectIncludingPendingInsulin(let error),
              .insulinCounteractionEffect(let error),
-             .negativeInsulinDamper(let error),
              .carbEffect(let error),
              .carbsOnBoard(let error),
              .insulinOnBoard(let error),
