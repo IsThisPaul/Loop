@@ -18,8 +18,9 @@ struct ChartView: View {
     private let preset: Preset?
     private let yAxisMarks: [Double]
     private let colorGradient: LinearGradient
+    private let markerDate: Date?
     
-    init(glucoseSamples: [GlucoseSampleAttributes], predicatedGlucose: [Double], predicatedStartDate: Date?, predicatedInterval: TimeInterval?, useLimits: Bool, lowerLimit: Double, upperLimit: Double, glucoseRanges: [GlucoseRangeValue], preset: Preset?, yAxisMarks: [Double]) {
+    init(glucoseSamples: [GlucoseSampleAttributes], predicatedGlucose: [Double], predicatedStartDate: Date?, predicatedInterval: TimeInterval?, useLimits: Bool, lowerLimit: Double, upperLimit: Double, glucoseRanges: [GlucoseRangeValue], preset: Preset?, yAxisMarks: [Double], markerDate: Date? = nil) {
         self.glucoseSampleData = ChartValues.convert(data: glucoseSamples, useLimits: useLimits, lowerLimit: lowerLimit, upperLimit: upperLimit)
         self.predicatedData = ChartValues.convert(
             data: predicatedGlucose,
@@ -33,15 +34,17 @@ struct ChartView: View {
         self.preset = preset
         self.glucoseRanges = glucoseRanges
         self.yAxisMarks = yAxisMarks
+        self.markerDate = markerDate
     }
     
-    init(glucoseSamples: [GlucoseSampleAttributes], useLimits: Bool, lowerLimit: Double, upperLimit: Double, glucoseRanges: [GlucoseRangeValue], preset: Preset?, yAxisMarks: [Double]) {
+    init(glucoseSamples: [GlucoseSampleAttributes], useLimits: Bool, lowerLimit: Double, upperLimit: Double, glucoseRanges: [GlucoseRangeValue], preset: Preset?, yAxisMarks: [Double], markerDate: Date? = nil) {
         self.glucoseSampleData = ChartValues.convert(data: glucoseSamples, useLimits: useLimits, lowerLimit: lowerLimit, upperLimit: upperLimit)
         self.predicatedData = []
         self.preset = preset
         self.glucoseRanges = glucoseRanges
         self.yAxisMarks = yAxisMarks
         self.colorGradient = ChartView.getGradient(useLimits: useLimits, lowerLimit: lowerLimit, upperLimit: upperLimit, highestValue: yAxisMarks.max() ?? 1)
+        self.markerDate = markerDate
     }
 
     private static func getGradient(useLimits: Bool, lowerLimit: Double, upperLimit: Double, highestValue: Double) -> LinearGradient {
@@ -104,6 +107,17 @@ struct ChartView: View {
                     )
                     .lineStyle(StrokeStyle(lineWidth: 2, dash: [6, 5]))
                     .foregroundStyle(colorGradient)
+                }
+
+                if let markerDate {
+                    RuleMark(x: .value("Last Loop", markerDate))
+                        .lineStyle(StrokeStyle(lineWidth: 1, dash: [2, 3]))
+                        .foregroundStyle(Color.primary.opacity(0.6))
+                        .annotation(position: .top, spacing: 2) {
+                            Text(markerDate, format: .dateTime.hour().minute())
+                                .font(.caption2)
+                                .foregroundStyle(Color.primary)
+                        }
                 }
             }
             .chartForegroundStyleScale([

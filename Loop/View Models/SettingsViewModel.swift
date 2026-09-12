@@ -86,7 +86,6 @@ public class SettingsViewModel: ObservableObject {
         return delegate?.closedLoopDescriptiveText
     }
 
-
     @Published var automaticDosingStrategy: AutomaticDosingStrategy {
         didSet {
             delegate?.dosingStrategyChanged(automaticDosingStrategy)

@@ -11,6 +11,30 @@ import HealthKit
 import LoopKit
 
 extension WatchContext {
+    var reservoirVolumeText: String? {
+        if reservoirAboveThreshold == true {
+            return NSLocalizedString(
+                "50+ U",
+                comment: "Watch HUD text for reservoir volume when current Omnipod reservoir is above the maximum exact reading"
+            )
+        }
+
+        guard let reservoirVolume = reservoirVolume else {
+            return nil
+        }
+
+        let insulinFormatter: QuantityFormatter = {
+            let insulinFormatter = QuantityFormatter(for: .internationalUnit())
+            insulinFormatter.unitStyle = .long
+            insulinFormatter.numberFormatter.minimumFractionDigits = 0
+            insulinFormatter.numberFormatter.maximumFractionDigits = 0
+
+            return insulinFormatter
+        }()
+
+        return insulinFormatter.string(from: reservoirVolume)
+    }
+
     var activeInsulin: HKQuantity? {
         guard let value = iob else {
             return nil

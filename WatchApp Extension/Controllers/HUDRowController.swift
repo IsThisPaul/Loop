@@ -85,22 +85,8 @@ extension HUDRowController {
         setDetail(basalFormatter.string(from: tempBasal, unit: unit))
     }
 
-    func setReservoirVolume(_ reservoirVolume: HKQuantity?) {
-        guard let reservoirVolume = reservoirVolume else {
-            setDetail(nil)
-            return
-        }
-
-        let insulinFormatter: QuantityFormatter = {
-            let insulinFormatter = QuantityFormatter(for: .internationalUnit())
-            insulinFormatter.unitStyle = .long
-            insulinFormatter.numberFormatter.minimumFractionDigits = 0
-            insulinFormatter.numberFormatter.maximumFractionDigits = 0
-
-            return insulinFormatter
-        }()
-
-        setDetail(insulinFormatter.string(from: reservoirVolume))
+    func setReservoirVolume(_ reservoirVolumeText: String?) {
+        setDetail(reservoirVolumeText)
     }
 }
 

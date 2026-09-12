@@ -428,6 +428,9 @@
         }
       }
     },
+    "50+ U" : {
+      "comment" : "Watch HUD text for reservoir volume when current Omnipod reservoir is above the maximum exact reading"
+    },
     "Active Carbs" : {
       "comment" : "HUD row title for COB",
       "localizations" : {

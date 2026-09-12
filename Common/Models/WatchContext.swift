@@ -44,6 +44,7 @@ final class WatchContext: RawRepresentable {
     var cob: Double?
     var iob: Double?
     var reservoir: Double?
+    var reservoirAboveThreshold: Bool?
     var reservoirPercentage: Double?
     var batteryPercentage: Double?
 
@@ -84,6 +85,7 @@ final class WatchContext: RawRepresentable {
         glucoseSyncIdentifier = rawValue["gs"] as? String
         iob = rawValue["iob"] as? Double
         reservoir = rawValue["r"] as? Double
+        reservoirAboveThreshold = rawValue["rat"] as? Bool
         reservoirPercentage = rawValue["rp"] as? Double
         batteryPercentage = rawValue["bp"] as? Double
 
@@ -136,6 +138,7 @@ final class WatchContext: RawRepresentable {
         raw["iob"] = iob
         raw["ld"] = loopLastRunDate
         raw["r"] = reservoir
+        raw["rat"] = reservoirAboveThreshold
         raw["rbo"] = recommendedBolusDose
         raw["pce"] = potentialCarbEntry?.rawValue
         raw["rp"] = reservoirPercentage

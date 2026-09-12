@@ -172,7 +172,7 @@ final class ChartHUDController: HUDInterfaceController, WKCrownDelegate {
             case .netBasal:
                 cell.setNetTempBasalDose(isActiveContextStale ? nil : activeContext.lastNetTempBasalDose)
             case .reservoirVolume:
-                cell.setReservoirVolume(isActiveContextStale ? nil : activeContext.reservoirVolume)
+                cell.setReservoirVolume(isActiveContextStale ? nil : activeContext.reservoirVolumeText)
             }
         }
 

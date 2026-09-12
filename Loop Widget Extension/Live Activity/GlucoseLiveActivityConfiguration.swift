@@ -112,7 +112,8 @@ struct GlucoseLiveActivityConfiguration: Widget {
                                 : context.attributes.upperLimitChartMg,
                                 glucoseRanges: context.state.glucoseRanges,
                                 preset: context.state.preset,
-                                yAxisMarks: context.state.yAxisMarks
+                                yAxisMarks: context.state.yAxisMarks,
+                                markerDate: context.state.lastCompleted
                             )
                             .frame(height: 85)
                         } else {
@@ -127,7 +128,8 @@ struct GlucoseLiveActivityConfiguration: Widget {
                                 : context.attributes.upperLimitChartMg,
                                 glucoseRanges: context.state.glucoseRanges,
                                 preset: context.state.preset,
-                                yAxisMarks: context.state.yAxisMarks
+                                yAxisMarks: context.state.yAxisMarks,
+                                markerDate: context.state.lastCompleted
                             )
                             .frame(height: 85)
                         }
@@ -483,7 +485,8 @@ struct GlucoseLiveActivityConfiguration: Widget {
                             : context.attributes.upperLimitChartMg,
                         glucoseRanges: context.state.glucoseRanges,
                         preset: context.state.preset,
-                        yAxisMarks: context.state.yAxisMarks
+                        yAxisMarks: context.state.yAxisMarks,
+                        markerDate: context.state.lastCompleted
                     )
                     .frame(height: 75)
                 } else {
@@ -498,7 +501,8 @@ struct GlucoseLiveActivityConfiguration: Widget {
                             : context.attributes.upperLimitChartMg,
                         glucoseRanges: context.state.glucoseRanges,
                         preset: context.state.preset,
-                        yAxisMarks: context.state.yAxisMarks
+                        yAxisMarks: context.state.yAxisMarks,
+                        markerDate: context.state.lastCompleted
                     )
                     .frame(height: 75)
                 }

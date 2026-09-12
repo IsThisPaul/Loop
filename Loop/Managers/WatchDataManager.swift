@@ -13,6 +13,10 @@ import LoopKit
 import LoopCore
 
 final class WatchDataManager: NSObject {
+    private enum OmnipodConstants {
+        static let pluginIdentifiers: Set<String> = ["Omnipod", "Omnipod-Dash"]
+        static let maximumExactReservoirReading = 50.0
+    }
 
     private unowned let deviceManager: DeviceDataManager
     
@@ -237,7 +241,7 @@ final class WatchDataManager: NSObject {
         let loopManager = deviceManager.loopManager!
 
         let glucose = deviceManager.glucoseStore.latestGlucose
-        let reservoir =  deviceManager.doseStore.lastReservoirValue
+        let reservoirDisplay = reservoirDisplayForWatch()
         let basalDeliveryState = deviceManager.pumpManager?.status.basalDeliveryState
 
         loopManager.getLoopState { (manager, state) in
@@ -246,7 +250,8 @@ final class WatchDataManager: NSObject {
             let carbsOnBoard = state.carbsOnBoard
 
             let context = WatchContext(glucose: glucose, glucoseUnit: self.deviceManager.preferredGlucoseUnit)
-            context.reservoir = reservoir?.unitVolume
+            context.reservoir = reservoirDisplay.value?.unitVolume
+            context.reservoirAboveThreshold = reservoirDisplay.isAboveThreshold
             context.loopLastRunDate = manager.lastLoopCompleted
             context.cob = carbsOnBoard?.quantity.doubleValue(for: HKUnit.gram())
 
@@ -411,6 +416,30 @@ final class WatchDataManager: NSObject {
             dosingDecision.carbEntry = nil
             enactBolus()
         }
+    }
+
+    private func reservoirDisplayForWatch() -> (value: ReservoirValue?, isAboveThreshold: Bool) {
+        guard let pumpManager = deviceManager.pumpManager else {
+            return (deviceManager.doseStore.lastReservoirValue, false)
+        }
+
+        if isOmnipodReservoirAboveThreshold(pumpManager: pumpManager) {
+            return (nil, true)
+        }
+
+        return (deviceManager.doseStore.lastReservoirValue, false)
+    }
+
+    private func isOmnipodReservoirAboveThreshold(pumpManager: PumpManager) -> Bool {
+        guard OmnipodConstants.pluginIdentifiers.contains(pumpManager.pluginIdentifier),
+              let podState = pumpManager.rawState["podState"] as? [String: Any],
+              let lastInsulinMeasurements = podState["lastInsulinMeasurements"] as? [String: Any],
+              let reservoirLevel = lastInsulinMeasurements["reservoirLevel"] as? Double
+        else {
+            return false
+        }
+
+        return reservoirLevel > OmnipodConstants.maximumExactReservoirReading
     }
 }
 
